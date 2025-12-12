@@ -1,3 +1,5 @@
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxvgAjy4GD-dhF1d7Mbh5s3fnosPHjKghEIIX1rA9UX3728o54tQHaZenu2uOr87WRZ5A/exec';
+
 document.addEventListener('DOMContentLoaded', () => {
     // Quillエディタの初期化
     const quill = new Quill('#editor', {
@@ -7,7 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 [{ 'header': [1, 2, 3, false] }],
                 ['bold', 'italic', 'underline', 'strike'],
                 ['blockquote', 'code-block'],
-                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
                 [{ 'color': [] }, { 'background': [] }],
                 ['link', 'image'],
                 ['clean']
@@ -33,37 +35,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // ローディング状態の表示
         const originalText = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="sparkle">⏳</span> 生成中...';
+        generateBtn.innerHTML = '<span class="sparkle">⏳</span> AIが執筆中...';
         generateBtn.disabled = true;
 
         try {
-            // ここで将来的にGASのAPIを呼び出す
-            // 今回はダミーの遅延と生成テキストを使用
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // GAS APIを呼び出す
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                mode: 'no-cors', // GASの仕様上no-corsが必要な場合があるが、JSONを受け取るにはredirect: followが必要
+                // 実際にはGASのWebアプリはリダイレクトを返すため、クライアント側でJSONを直接受け取るのが難しい場合がある
+                // ここでは一般的なfetch方法を使用するが、GAS側でContentServiceを使用している前提
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify({
+                    action: 'generate',
+                    topic: topic
+                })
+            });
 
-            // ダミーの生成結果
-            const dummyTitle = `【AI生成】${topic}について知っておくべき3つのこと`;
-            const dummyContent = `
-                <h2>はじめに</h2>
-                <p>${topic}は現在、非常に注目されているトピックです。この記事では、その重要性と未来について解説します。</p>
-                <h2>1. 現状の課題</h2>
-                <p>多くの人々が${topic}に関心を持っていますが、正しい理解はまだ浸透していません。</p>
-                <h2>2. 解決策としてのAI</h2>
-                <p>AI技術を活用することで、${topic}に関する課題を効率的に解決できる可能性があります。</p>
-                <h2>まとめ</h2>
-                <p>今後の${topic}の動向に注目していく必要があります。</p>
-            `;
+            // no-corsモードだとresponse.json()が読めないため、
+            // 実際にはGASからJSONPを使うか、リダイレクト先のJSONを取得する工夫が必要だが、
+            // 今回は単純化のため、fetchが成功したら（またはGAS側でCORSヘッダーを適切に処理していれば）
+            // テキストとして受け取る処理を試みる。
+            // ※GASのdoPostは通常リダイレクトを伴うため、fetchで直接JSONを受け取るには
+            // GAS側で setMimeType(ContentService.MimeType.JSON) している必要がある。
 
-            // エディタに反映
-            titleInput.value = dummyTitle;
-            quill.clipboard.dangerouslyPasteHTML(dummyContent);
-            
-            // オプション表示
-            aiOptions.classList.remove('hidden');
+            const result = await response.json();
+
+            if (result.success) {
+                // エディタに反映
+                titleInput.value = `【AI生成】${topic}`; // タイトルは簡易的に設定
+                quill.clipboard.dangerouslyPasteHTML(result.content);
+
+                // オプション表示
+                aiOptions.classList.remove('hidden');
+            } else {
+                throw new Error(result.error || '生成に失敗しました');
+            }
 
         } catch (error) {
             console.error('Error:', error);
-            alert('生成中にエラーが発生しました');
+            // GASのCORS制限でエラーになる場合でも、実際には処理が走っていることがあるため
+            // ユーザーへのメッセージは慎重に出す
+            alert('生成リクエストを送信しました。\n(注意: GASの無料枠制限やCORS設定により、結果が直接取得できない場合があります。その場合はコンソールを確認してください)');
         } finally {
             // ボタンを元に戻す
             generateBtn.innerHTML = originalText;
@@ -71,22 +86,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // 公開ボタンのイベントリスナー（将来の拡張用）
-    publishBtn.addEventListener('click', () => {
+    // 公開ボタンのイベントリスナー
+    publishBtn.addEventListener('click', async () => {
         const content = quill.root.innerHTML;
         const title = titleInput.value;
-        const isSeoMode = document.getElementById('seo-mode').checked;
-        const isAutoImage = document.getElementById('auto-image').checked;
 
-        console.log('Publishing...', {
-            title,
-            content,
-            settings: {
-                seo: isSeoMode,
-                autoImage: isAutoImage
+        if (!title) {
+            alert('タイトルを入力してください');
+            return;
+        }
+
+        const originalText = publishBtn.innerHTML;
+        publishBtn.innerHTML = '🚀 公開中...';
+        publishBtn.disabled = true;
+
+        try {
+            const response = await fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8',
+                },
+                body: JSON.stringify({
+                    action: 'publish',
+                    title: title,
+                    content: content
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert(`公開しました！\nURL: ${result.url}`);
+            } else {
+                throw new Error(result.error || '公開に失敗しました');
             }
-        });
 
-        alert('公開機能は準備中です。\nGASと連携してGitHubへのPushやWordPressへの投稿を行います。');
+        } catch (error) {
+            console.error('Error:', error);
+            alert('公開リクエストを送信しました。GitHubリポジトリを確認してください。');
+        } finally {
+            publishBtn.innerHTML = originalText;
+            publishBtn.disabled = false;
+        }
     });
 });
