@@ -20,113 +20,104 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 要素の取得
     const generateBtn = document.getElementById('generate-btn');
+    const systemPromptInput = document.getElementById('system-prompt');
     const topicInput = document.getElementById('topic-input');
+    const lengthSelect = document.getElementById('length-select');
+    const toneSelect = document.getElementById('tone-select');
+
     const titleInput = document.getElementById('post-title');
-    const aiOptions = document.getElementById('ai-options');
+    const copyHtmlBtn = document.getElementById('copy-html-btn');
+    const createJobBtn = document.getElementById('create-job-btn');
     const publishBtn = document.getElementById('publish-btn');
 
     // AI生成ボタンのイベントリスナー
     generateBtn.addEventListener('click', async () => {
         const topic = topicInput.value.trim();
+        const systemPrompt = systemPromptInput.value.trim();
+
         if (!topic) {
-            alert('記事のテーマを入力してください');
+            alert('テーマを入力してください');
             return;
         }
 
         // ローディング状態の表示
         const originalText = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="sparkle">⏳</span> AIが執筆中...';
+        generateBtn.innerHTML = '<span class="sparkle">⏳</span> 生成中...';
         generateBtn.disabled = true;
 
         try {
+            // プロンプトの組み立て
+            const fullPrompt = `
+${systemPrompt}
+
+【条件】
+- テーマ: ${topic}
+- 文字数目安: ${lengthSelect.options[lengthSelect.selectedIndex].text}
+- トーン: ${toneSelect.options[toneSelect.selectedIndex].text}
+            `;
+
             // GAS APIを呼び出す
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                mode: 'no-cors', // GASの仕様上no-corsが必要な場合があるが、JSONを受け取るにはredirect: followが必要
-                // 実際にはGASのWebアプリはリダイレクトを返すため、クライアント側でJSONを直接受け取るのが難しい場合がある
-                // ここでは一般的なfetch方法を使用するが、GAS側でContentServiceを使用している前提
+                mode: 'no-cors',
                 headers: {
                     'Content-Type': 'text/plain;charset=utf-8',
                 },
                 body: JSON.stringify({
                     action: 'generate',
-                    topic: topic
+                    topic: fullPrompt // サーバー側の引数名はtopicのまま再利用（中身はフルプロンプト）
                 })
             });
 
-            // no-corsモードだとresponse.json()が読めないため、
-            // 実際にはGASからJSONPを使うか、リダイレクト先のJSONを取得する工夫が必要だが、
-            // 今回は単純化のため、fetchが成功したら（またはGAS側でCORSヘッダーを適切に処理していれば）
-            // テキストとして受け取る処理を試みる。
-            // ※GASのdoPostは通常リダイレクトを伴うため、fetchで直接JSONを受け取るには
-            // GAS側で setMimeType(ContentService.MimeType.JSON) している必要がある。
+            // no-corsのため、成功したと仮定してダミーレスポンスを表示するか、
+            // 実際にはGAS側でContentService.MimeType.JSONを返していれば
+            // 以下の処理はスキップされる（no-corsではjson()が読めないため）。
+            // ★重要: 開発中はno-corsだとデバッグしにくいため、
+            // 本番ではGAS側を適切に設定し、corsモードで通信するのがベスト。
+            // ここでは「リクエストは飛んだ」前提で、ユーザーに通知する。
 
-            const result = await response.json();
+            // alert('生成リクエストを送信しました。結果が表示されるまで数秒お待ちください...');
 
-            if (result.success) {
-                // エディタに反映
-                titleInput.value = `【AI生成】${topic}`; // タイトルは簡易的に設定
-                quill.clipboard.dangerouslyPasteHTML(result.content);
+            // 【デモ用】no-corsだと結果が取れないため、一時的にダミーテキストを入れる
+            // ※本来はGASからのレスポンスを待つ
+            const dummyContent = `
+                <h2>${topic}について</h2>
+                <p>（ここにAIが生成した文章が入ります。現在はデモモードのため、GASからの実際のレスポンスを受け取るにはCORS設定が必要です）</p>
+                <p>設定された役割: ${systemPrompt.substring(0, 20)}...</p>
+                <p>トーン: ${toneSelect.value}</p>
+            `;
 
-                // オプション表示
-                aiOptions.classList.remove('hidden');
-            } else {
-                throw new Error(result.error || '生成に失敗しました');
-            }
+            titleInput.value = `【案】${topic}`;
+            quill.clipboard.dangerouslyPasteHTML(dummyContent);
 
         } catch (error) {
             console.error('Error:', error);
-            // GASのCORS制限でエラーになる場合でも、実際には処理が走っていることがあるため
-            // ユーザーへのメッセージは慎重に出す
-            alert('生成リクエストを送信しました。\n(注意: GASの無料枠制限やCORS設定により、結果が直接取得できない場合があります。その場合はコンソールを確認してください)');
+            alert('エラーが発生しました');
         } finally {
-            // ボタンを元に戻す
             generateBtn.innerHTML = originalText;
             generateBtn.disabled = false;
         }
     });
 
-    // 公開ボタンのイベントリスナー
+    // HTMLコピー機能 (Free User向け)
+    copyHtmlBtn.addEventListener('click', () => {
+        const html = quill.root.innerHTML;
+        navigator.clipboard.writeText(html).then(() => {
+            const originalText = copyHtmlBtn.innerHTML;
+            copyHtmlBtn.innerHTML = '<span class="icon">✅</span> コピー完了';
+            setTimeout(() => {
+                copyHtmlBtn.innerHTML = originalText;
+            }, 2000);
+        });
+    });
+
+    // 自動投稿ジョブ設定 (Pro User向け)
+    createJobBtn.addEventListener('click', () => {
+        alert('【Pro機能】\nこのプロンプト設定を保存し、自動投稿ジョブを作成します。\n（課金ページへ遷移します）');
+    });
+
+    // 公開ボタンのイベントリスナー（Pro機能として残す）
     publishBtn.addEventListener('click', async () => {
-        const content = quill.root.innerHTML;
-        const title = titleInput.value;
-
-        if (!title) {
-            alert('タイトルを入力してください');
-            return;
-        }
-
-        const originalText = publishBtn.innerHTML;
-        publishBtn.innerHTML = '🚀 公開中...';
-        publishBtn.disabled = true;
-
-        try {
-            const response = await fetch(GAS_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
-                },
-                body: JSON.stringify({
-                    action: 'publish',
-                    title: title,
-                    content: content
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                alert(`公開しました！\nURL: ${result.url}`);
-            } else {
-                throw new Error(result.error || '公開に失敗しました');
-            }
-
-        } catch (error) {
-            console.error('Error:', error);
-            alert('公開リクエストを送信しました。GitHubリポジトリを確認してください。');
-        } finally {
-            publishBtn.innerHTML = originalText;
-            publishBtn.disabled = false;
-        }
+        alert('【Pro機能】\nワンクリック投稿機能は有料プラン限定です。');
     });
 });
