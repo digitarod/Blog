@@ -1,5 +1,7 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbw2xELh8HgC-kD4Vo3zzYyFavXdRdpfgCBYyDX_VG19eAi6NDJN-Rc9nftElXsqDt8wQQ/exec';
 
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxvgAjy4GD-dhF1d7Mbh5s3fnosPHjKghEIIX1rA9UX3728o54tQHaZenu2uOr87WRZ5A/exec';
+
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -65,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. 認証タブ切り替え
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
+            console.log('Tab clicked:', btn.dataset.tab); // Debug log
             tabBtns.forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             authSubmitBtn.textContent = btn.dataset.tab === 'login' ? 'ログイン' : '新規登録';
