@@ -1,4 +1,4 @@
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyVLGiFwCLGUNKSUhvdfjUz13IiDc98_x6_OjzleZVNZeRDTGbt1YFZhUGPxwbapn0w0g/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxpy6oJOkkN8K0KzoDxmyQIJ8Vzr96hK0ATGfPrlHtcSx1RO5cJHGwEAyB-7ljd5gc/exec';
 
 // 状態管理
 let currentUser = null;
@@ -59,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 初期化処理 ---
     checkLoginStatus();
+    initGoogleSignIn(); // Google認証の初期化
 
     // --- イベントリスナー ---
 
@@ -275,10 +276,68 @@ ${systemPrompt}
     }
 });
 
-// Googleログインのコールバック (グローバル関数である必要がある)
-async function handleCredentialResponse(response) {
+// ========================================
+// Google認証（ROOMアシスタント方式）
+// ========================================
+
+/**
+ * Google Sign-Inを初期化
+ */
+async function initGoogleSignIn() {
     try {
         // GAS APIを呼び出すためのヘルパー関数を再定義（スコープ外のため）
+        const callGas = async (data) => {
+            const res = await fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        };
+
+        // GASからGoogle Client IDを取得
+        const res = await callGas({ action: 'getGoogleClientId' });
+
+        if (!res.success || !res.clientId) {
+            console.log('Google Client ID が設定されていません');
+            return;
+        }
+
+        const clientId = res.clientId;
+
+        // Google Sign-Inボタンを初期化
+        google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleCredentialResponse
+        });
+
+        // ボタンをレンダリング
+        const container = document.getElementById('google-signin-button');
+        if (container) {
+            google.accounts.id.renderButton(
+                container,
+                {
+                    theme: 'outline',
+                    size: 'large',
+                    text: 'signin_with',
+                    shape: 'rectangular',
+                    logo_alignment: 'left',
+                    width: '300'
+                }
+            );
+        }
+
+        console.log('Google Sign-In 初期化完了');
+
+    } catch (error) {
+        console.error('Google Sign-In 初期化エラー:', error);
+    }
+}
+
+// Googleログインのコールバック
+async function handleCredentialResponse(response) {
+    try {
+        // GAS APIを呼び出すためのヘルパー関数を再定義
         const callGas = async (data) => {
             const res = await fetch(GAS_API_URL, {
                 method: 'POST',
