@@ -1,4 +1,4 @@
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbynAFQFqKNfS9nM_OghfcbLFD_zZcixpDH-GPta5JFEg0n7JUPC3b4EIw5dfvwT6tC06Q/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwVdp8jXaUpK0kRaJygS_iPpWDivXBOwD2B9E49LIHo6MxNtQnvrQVTlrtNDzdZ35oj/exec';
 
 document.addEventListener('DOMContentLoaded', () => {
     // Quillエディタの初期化
