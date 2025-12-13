@@ -27,8 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const titleInput = document.getElementById('post-title');
     const copyHtmlBtn = document.getElementById('copy-html-btn');
-    const createJobBtn = document.getElementById('create-job-btn');
-    const publishBtn = document.getElementById('publish-btn');
 
     // AI生成ボタンのイベントリスナー
     generateBtn.addEventListener('click', async () => {
@@ -57,11 +55,12 @@ ${systemPrompt}
             `;
 
             // GAS APIを呼び出す
+            // mode: 'cors' (デフォルト) でリクエストすることで、GASからのJSONレスポンスを受け取れます。
+            // ※GAS側で setMimeType(ContentService.MimeType.JSON) されている必要があります。
             const response = await fetch(GAS_API_URL, {
                 method: 'POST',
-                mode: 'no-cors',
                 headers: {
-                    'Content-Type': 'text/plain;charset=utf-8',
+                    'Content-Type': 'text/plain;charset=utf-8', // GASのPOSTはtext/plainが安定します
                 },
                 body: JSON.stringify({
                     action: 'generate',
@@ -69,37 +68,30 @@ ${systemPrompt}
                 })
             });
 
-            // no-corsのため、成功したと仮定してダミーレスポンスを表示するか、
-            // 実際にはGAS側でContentService.MimeType.JSONを返していれば
-            // 以下の処理はスキップされる（no-corsではjson()が読めないため）。
-            // ★重要: 開発中はno-corsだとデバッグしにくいため、
-            // 本番ではGAS側を適切に設定し、corsモードで通信するのがベスト。
-            // ここでは「リクエストは飛んだ」前提で、ユーザーに通知する。
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-            // alert('生成リクエストを送信しました。結果が表示されるまで数秒お待ちください...');
+            const result = await response.json();
 
-            // 【デモ用】no-corsだと結果が取れないため、一時的にダミーテキストを入れる
-            // ※本来はGASからのレスポンスを待つ
-            const dummyContent = `
-                <h2>${topic}について</h2>
-                <p>（ここにAIが生成した文章が入ります。現在はデモモードのため、GASからの実際のレスポンスを受け取るにはCORS設定が必要です）</p>
-                <p>設定された役割: ${systemPrompt.substring(0, 20)}...</p>
-                <p>トーン: ${toneSelect.value}</p>
-            `;
-
-            titleInput.value = `【案】${topic}`;
-            quill.clipboard.dangerouslyPasteHTML(dummyContent);
+            if (result.success) {
+                // 生成成功：AIが書いた記事をエディタに反映
+                titleInput.value = `【案】${topic}`;
+                quill.clipboard.dangerouslyPasteHTML(result.content);
+            } else {
+                throw new Error(result.error || '生成に失敗しました（GAS側でエラーが発生）');
+            }
 
         } catch (error) {
             console.error('Error:', error);
-            alert('エラーが発生しました');
+            alert(`エラーが発生しました:\n${error.message}\n\n※GASのデプロイが「新バージョン」で更新されているか確認してください。`);
         } finally {
             generateBtn.innerHTML = originalText;
             generateBtn.disabled = false;
         }
     });
 
-    // HTMLコピー機能 (Free User向け)
+    // HTMLコピー機能
     copyHtmlBtn.addEventListener('click', () => {
         const html = quill.root.innerHTML;
         navigator.clipboard.writeText(html).then(() => {
@@ -109,15 +101,5 @@ ${systemPrompt}
                 copyHtmlBtn.innerHTML = originalText;
             }, 2000);
         });
-    });
-
-    // 自動投稿ジョブ設定 (Pro User向け)
-    createJobBtn.addEventListener('click', () => {
-        alert('【Pro機能】\nこのプロンプト設定を保存し、自動投稿ジョブを作成します。\n（課金ページへ遷移します）');
-    });
-
-    // 公開ボタンのイベントリスナー（Pro機能として残す）
-    publishBtn.addEventListener('click', async () => {
-        alert('【Pro機能】\nワンクリック投稿機能は有料プラン限定です。');
     });
 });
