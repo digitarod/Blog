@@ -44,7 +44,7 @@ body {
 }
 
 .app-header.hidden {
-    display: none;
+    display: none !important;
 }
 
 .brand {
@@ -106,7 +106,7 @@ body {
 }
 
 .app-container.hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Sidebar */
@@ -407,15 +407,33 @@ body {
 }
 
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
 }
 
 .form-group label {
     display: block;
     margin-bottom: 0.5rem;
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 600;
     color: var(--text-primary);
+}
+
+/* Improved Input Fields */
+.form-group input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: #f9fafb;
+    transition: all 0.2s;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background-color: white;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
 .divider {
@@ -460,7 +478,7 @@ body {
 }
 
 .modal-overlay.hidden {
-    display: none;
+    display: none !important;
 }
 
 .modal-content {
