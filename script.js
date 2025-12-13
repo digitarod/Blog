@@ -1,4 +1,4 @@
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxpy6oJOkkN8K0KzoDxmyQIJ8Vzr96hK0ATGfPrlHtcSx1RO5cJHGwEAyB-7ljd5gc/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycby6YH8HLiqMe0pPxJy1eETkKKgRSlYBzbswFdkE13fygmC6ZQNbpZUi3vb1jtUSKOrHDQ/exec';
 
 // 状態管理
 let currentUser = null;
@@ -187,8 +187,18 @@ ${systemPrompt}
             });
 
             if (response.success) {
-                titleInput.value = `【案】${topic}`;
-                quill.clipboard.dangerouslyPasteHTML(response.content);
+                // response.content が { title: "...", content: "..." } になっている
+                const result = response.content;
+
+                // タイトルがオブジェクト内にある場合と、フォールバックで文字列の場合を考慮
+                if (typeof result === 'object' && result.title) {
+                    titleInput.value = result.title;
+                    quill.clipboard.dangerouslyPasteHTML(result.content);
+                } else {
+                    // 旧形式またはパース失敗時
+                    titleInput.value = `【案】${topic}`;
+                    quill.clipboard.dangerouslyPasteHTML(result);
+                }
             } else {
                 throw new Error(response.error || '生成失敗');
             }
