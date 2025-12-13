@@ -54,12 +54,8 @@
 
         <div class="divider">または</div>
 
-        <div id="g_id_onload" data-client_id="1038855866810-1q9bvie4f3u20lsh3cuaqsq3t9vpkdpm.apps.googleusercontent.com"
-            data-callback="handleCredentialResponse" data-auto_prompt="false">
-        </div>
-        <div class="g_id_signin" data-type="standard" data-size="large" data-theme="outline" data-text="sign_in_with"
-            data-shape="rectangular" data-logo_alignment="center">
-        </div>
+        <!-- Google Sign-In Button Container -->
+        <div id="google-signin-button" style="display: flex; justify-content: center; margin-top: 1rem;"></div>
     </div>
 
     <!-- Main App Content (Initially Hidden) -->
@@ -92,79 +88,54 @@
                             <select id="tone-select" class="select-field">
                                 <option value="casual">親しみやすい</option>
                                 <option value="professional">専門的・堅め</option>
-                                <option value="emotional">エモい・感情的</option>
-                            </select>
+                                </header>
+
+                                <div class="editor-wrapper">
+                                    <div class="editor-container">
+                                        <div id="editor">
+                                            <p>左側の設定パネルでテーマを入力し、「記事を生成する」ボタンを押してください。<br>
+                                                AIがあなたの指示に従って記事を執筆します。</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                </main>
                         </div>
-                    </div>
-                </section>
 
-                <div class="action-area">
-                    <button class="btn accent full-width" id="generate-btn">
-                        <span class="sparkle">✨</span> 記事を生成する
-                    </button>
-                </div>
-            </div>
-        </aside>
+                        <!-- 設定モーダル -->
+                        <div id="settings-modal" class="modal-overlay hidden">
+                            <div class="modal-content settings-box">
+                                <div class="modal-header">
+                                    <h3>設定</h3>
+                                    <button class="close-btn" id="close-settings">×</button>
+                                </div>
 
-        <!-- 右パネル: プレビュー & エディタ -->
-        <main class="main-content">
-            <header class="top-bar">
-                <div class="file-info">
-                    <input type="text" id="post-title" class="title-input-small" placeholder="記事タイトル (未設定)">
-                </div>
-                <div class="actions">
-                    <button class="btn secondary" id="copy-html-btn">
-                        <span class="icon">📋</span> HTMLをコピー
-                    </button>
-                </div>
-            </header>
-
-            <div class="editor-wrapper">
-                <div class="editor-container">
-                    <div id="editor">
-                        <p>左側の設定パネルでテーマを入力し、「記事を生成する」ボタンを押してください。<br>
-                            AIがあなたの指示に従って記事を執筆します。</p>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- 設定モーダル -->
-    <div id="settings-modal" class="modal-overlay hidden">
-        <div class="modal-content settings-box">
-            <div class="modal-header">
-                <h3>設定</h3>
-                <button class="close-btn" id="close-settings">×</button>
-            </div>
-
-            <div class="settings-section">
-                <h4>システムプロンプト (役割設定)</h4>
-                <p class="desc">AIの振る舞いや記事のスタイルを定義します。</p>
-                <textarea id="system-prompt-setting" class="prompt-area" rows="6">あなたはプロのWebライターです。
+                                <div class="settings-section">
+                                    <h4>システムプロンプト (役割設定)</h4>
+                                    <p class="desc">AIの振る舞いや記事のスタイルを定義します。</p>
+                                    <textarea id="system-prompt-setting" class="prompt-area" rows="6">あなたはプロのWebライターです。
 読者の興味を惹きつける、SEOに強いブログ記事を作成してください。
 構成は「導入」「見出しごとの本文」「まとめ」としてください。</textarea>
 
-                <div class="ai-improve-area">
-                    <input type="text" id="improve-request" class="input-field"
-                        placeholder="改善の要望 (例: もっと親しみやすく、絵文字多めで)">
-                    <button class="btn accent" id="improve-prompt-btn">
-                        <span class="sparkle">✨</span> AIで改善
-                    </button>
-                </div>
-            </div>
+                                    <div class="ai-improve-area">
+                                        <input type="text" id="improve-request" class="input-field"
+                                            placeholder="改善の要望 (例: もっと親しみやすく、絵文字多めで)">
+                                        <button class="btn accent" id="improve-prompt-btn">
+                                            <span class="sparkle">✨</span> AIで改善
+                                        </button>
+                                    </div>
+                                </div>
 
-            <div class="modal-footer">
-                <button class="btn primary" id="save-settings-btn">保存して閉じる</button>
-            </div>
-        </div>
-    </div>
+                                <div class="modal-footer">
+                                    <button class="btn primary" id="save-settings-btn">保存して閉じる</button>
+                                </div>
+                            </div>
+                        </div>
 
-    <!-- Quill JS -->
-    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
-    <!-- Google Sign-In -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="script.js"></script>
+                        <!-- Quill JS -->
+                        <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+                        <!-- Google Sign-In -->
+                        <script src="https://accounts.google.com/gsi/client" async defer></script>
+                        <script src="script.js"></script>
 </body>
 
 </html>
