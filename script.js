@@ -33,12 +33,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const copyHtmlBtn = document.getElementById('copy-html-btn');
 
     // モーダル・認証関連
-    const loginModal = document.getElementById('login-modal');
+    const loginView = document.getElementById('login-view');
+    const appHeader = document.getElementById('app-header');
+    const appContent = document.getElementById('app-content');
+
     const settingsModal = document.getElementById('settings-modal');
     const settingsBtn = document.getElementById('settings-btn');
     const closeSettingsBtn = document.getElementById('close-settings');
     const saveSettingsBtn = document.getElementById('save-settings-btn');
     const logoutBtn = document.getElementById('logout-btn');
+
     const authForm = document.getElementById('auth-form');
     const authEmail = document.getElementById('auth-email');
     const authPassword = document.getElementById('auth-password');
@@ -51,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const improveRequest = document.getElementById('improve-request');
 
     // ユーザー表示
-    const displayEmail = document.getElementById('display-email');
+    const displayEmail = document.getElementById('header-email');
 
     // --- 初期化処理 ---
     checkLoginStatus();
@@ -112,7 +116,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // 4. 設定保存
     saveSettingsBtn.addEventListener('click', () => {
         systemPrompt = systemPromptSetting.value;
-        // ※ここでGASに保存する処理を入れても良いが、今回はローカル変数のみ更新
         settingsModal.classList.add('hidden');
         alert('設定を保存しました（一時的）');
     });
@@ -215,7 +218,10 @@ ${systemPrompt}
         if (savedUser) {
             loginSuccess(JSON.parse(savedUser));
         } else {
-            loginModal.classList.remove('hidden');
+            // 未ログイン時はログイン画面を表示
+            loginView.classList.remove('hidden');
+            appHeader.classList.add('hidden');
+            appContent.classList.add('hidden');
         }
     }
 
@@ -223,12 +229,15 @@ ${systemPrompt}
         currentUser = user;
         localStorage.setItem('blog_creator_user', JSON.stringify(user));
 
-        displayEmail.textContent = user.email;
+        if (displayEmail) displayEmail.textContent = user.email;
         if (user.systemPrompt) {
             systemPrompt = user.systemPrompt;
         }
 
-        loginModal.classList.add('hidden');
+        // 画面切り替え
+        loginView.classList.add('hidden');
+        appHeader.classList.remove('hidden');
+        appContent.classList.remove('hidden');
     }
 
     async function callGasApi(data) {
@@ -287,13 +296,17 @@ async function handleCredentialResponse(response) {
             // ログイン成功処理
             const user = result.user;
             localStorage.setItem('blog_creator_user', JSON.stringify(user));
-            document.getElementById('display-email').textContent = user.email;
-            document.getElementById('login-modal').classList.add('hidden');
+
+            // 画面切り替え
+            const displayEmail = document.getElementById('header-email');
+            if (displayEmail) displayEmail.textContent = user.email;
+
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('app-header').classList.remove('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
 
             // システムプロンプト更新
             if (user.systemPrompt) {
-                // グローバル変数を更新したいが、moduleスコープ外からはアクセスしにくい
-                // ここではリロードしてlocalStorageから読み込ませるのが確実
                 location.reload();
             }
         } else {
