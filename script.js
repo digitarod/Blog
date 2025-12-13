@@ -314,6 +314,7 @@ async function initGoogleSignIn() {
         }
 
         const clientId = res.clientId;
+        console.log('Using Google Client ID:', clientId); // Debug log
 
         // Google Sign-Inボタンを初期化
         google.accounts.id.initialize({
