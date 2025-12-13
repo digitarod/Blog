@@ -1,5 +1,11 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwVdp8jXaUpK0kRaJygS_iPpWDivXBOwD2B9E49LIHo6MxNtQnvrQVTlrtNDzdZ35oj/exec';
 
+// 状態管理
+let currentUser = null;
+let systemPrompt = `あなたはプロのWebライターです。
+読者の興味を惹きつける、SEOに強いブログ記事を作成してください。
+構成は「導入」「見出しごとの本文」「まとめ」としてください。`;
+
 document.addEventListener('DOMContentLoaded', () => {
     // Quillエディタの初期化
     const quill = new Quill('#editor', {
@@ -18,30 +24,146 @@ document.addEventListener('DOMContentLoaded', () => {
         placeholder: 'ここに素晴らしい記事を書きましょう...'
     });
 
-    // 要素の取得
+    // --- 要素の取得 ---
     const generateBtn = document.getElementById('generate-btn');
-    const systemPromptInput = document.getElementById('system-prompt');
     const topicInput = document.getElementById('topic-input');
     const lengthSelect = document.getElementById('length-select');
     const toneSelect = document.getElementById('tone-select');
-
     const titleInput = document.getElementById('post-title');
     const copyHtmlBtn = document.getElementById('copy-html-btn');
 
-    // AI生成ボタンのイベントリスナー
+    // モーダル・認証関連
+    const loginModal = document.getElementById('login-modal');
+    const settingsModal = document.getElementById('settings-modal');
+    const settingsBtn = document.getElementById('settings-btn');
+    const closeSettingsBtn = document.getElementById('close-settings');
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    const logoutBtn = document.getElementById('logout-btn');
+    const authForm = document.getElementById('auth-form');
+    const authEmail = document.getElementById('auth-email');
+    const authPassword = document.getElementById('auth-password');
+    const authSubmitBtn = document.getElementById('auth-submit-btn');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    // 設定関連
+    const systemPromptSetting = document.getElementById('system-prompt-setting');
+    const improvePromptBtn = document.getElementById('improve-prompt-btn');
+    const improveRequest = document.getElementById('improve-request');
+
+    // ユーザー表示
+    const displayEmail = document.getElementById('display-email');
+
+    // --- 初期化処理 ---
+    checkLoginStatus();
+
+    // --- イベントリスナー ---
+
+    // 1. 認証タブ切り替え
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            authSubmitBtn.textContent = btn.dataset.tab === 'login' ? 'ログイン' : '新規登録';
+        });
+    });
+
+    // 2. ログイン/登録フォーム送信
+    authForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = authEmail.value;
+        const password = authPassword.value;
+        const mode = document.querySelector('.tab-btn.active').dataset.tab; // login or register
+
+        setLoading(authSubmitBtn, true);
+
+        try {
+            const response = await callGasApi({
+                action: mode,
+                email: email,
+                password: password
+            });
+
+            if (response.success) {
+                if (mode === 'login') {
+                    loginSuccess(response.user);
+                } else {
+                    alert(response.message); // 登録メール送信完了メッセージ
+                }
+            } else {
+                alert(response.message || 'エラーが発生しました');
+            }
+        } catch (error) {
+            alert('通信エラーが発生しました: ' + error.message);
+        } finally {
+            setLoading(authSubmitBtn, false);
+        }
+    });
+
+    // 3. 設定モーダル開閉
+    settingsBtn.addEventListener('click', () => {
+        systemPromptSetting.value = systemPrompt; // 現在の値をセット
+        settingsModal.classList.remove('hidden');
+    });
+
+    closeSettingsBtn.addEventListener('click', () => {
+        settingsModal.classList.add('hidden');
+    });
+
+    // 4. 設定保存
+    saveSettingsBtn.addEventListener('click', () => {
+        systemPrompt = systemPromptSetting.value;
+        // ※ここでGASに保存する処理を入れても良いが、今回はローカル変数のみ更新
+        settingsModal.classList.add('hidden');
+        alert('設定を保存しました（一時的）');
+    });
+
+    // 5. AIによるプロンプト改善
+    improvePromptBtn.addEventListener('click', async () => {
+        const request = improveRequest.value;
+        if (!request) {
+            alert('改善の要望を入力してください');
+            return;
+        }
+
+        setLoading(improvePromptBtn, true);
+
+        try {
+            const response = await callGasApi({
+                action: 'optimizePrompt',
+                currentPrompt: systemPromptSetting.value,
+                request: request
+            });
+
+            if (response.success) {
+                systemPromptSetting.value = response.optimizedPrompt;
+                alert('プロンプトを改善しました！');
+            } else {
+                alert('改善に失敗しました: ' + (response.error || '不明なエラー'));
+            }
+        } catch (error) {
+            alert('エラー: ' + error.message);
+        } finally {
+            setLoading(improvePromptBtn, false);
+        }
+    });
+
+    // 6. ログアウト
+    logoutBtn.addEventListener('click', () => {
+        currentUser = null;
+        localStorage.removeItem('blog_creator_user');
+        location.reload();
+    });
+
+    // 7. 記事生成
     generateBtn.addEventListener('click', async () => {
         const topic = topicInput.value.trim();
-        const systemPrompt = systemPromptInput.value.trim();
 
         if (!topic) {
             alert('テーマを入力してください');
             return;
         }
 
-        // ローディング状態の表示
-        const originalText = generateBtn.innerHTML;
-        generateBtn.innerHTML = '<span class="sparkle">⏳</span> 生成中...';
-        generateBtn.disabled = true;
+        setLoading(generateBtn, true, '生成中...');
 
         try {
             // プロンプトの組み立て
@@ -54,44 +176,27 @@ ${systemPrompt}
 - トーン: ${toneSelect.options[toneSelect.selectedIndex].text}
             `;
 
-            // GAS APIを呼び出す
-            // mode: 'cors' (デフォルト) でリクエストすることで、GASからのJSONレスポンスを受け取れます。
-            // ※GAS側で setMimeType(ContentService.MimeType.JSON) されている必要があります。
-            const response = await fetch(GAS_API_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'text/plain;charset=utf-8', // GASのPOSTはtext/plainが安定します
-                },
-                body: JSON.stringify({
-                    action: 'generate',
-                    topic: fullPrompt // サーバー側の引数名はtopicのまま再利用（中身はフルプロンプト）
-                })
+            const response = await callGasApi({
+                action: 'generate',
+                topic: fullPrompt
             });
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const result = await response.json();
-
-            if (result.success) {
-                // 生成成功：AIが書いた記事をエディタに反映
+            if (response.success) {
                 titleInput.value = `【案】${topic}`;
-                quill.clipboard.dangerouslyPasteHTML(result.content);
+                quill.clipboard.dangerouslyPasteHTML(response.content);
             } else {
-                throw new Error(result.error || '生成に失敗しました（GAS側でエラーが発生）');
+                throw new Error(response.error || '生成失敗');
             }
 
         } catch (error) {
             console.error('Error:', error);
-            alert(`エラーが発生しました:\n${error.message}\n\n※GASのデプロイが「新バージョン」で更新されているか確認してください。`);
+            alert(`エラーが発生しました:\n${error.message}`);
         } finally {
-            generateBtn.innerHTML = originalText;
-            generateBtn.disabled = false;
+            setLoading(generateBtn, false);
         }
     });
 
-    // HTMLコピー機能
+    // 8. HTMLコピー
     copyHtmlBtn.addEventListener('click', () => {
         const html = quill.root.innerHTML;
         navigator.clipboard.writeText(html).then(() => {
@@ -102,4 +207,100 @@ ${systemPrompt}
             }, 2000);
         });
     });
+
+    // --- ヘルパー関数 ---
+
+    function checkLoginStatus() {
+        const savedUser = localStorage.getItem('blog_creator_user');
+        if (savedUser) {
+            loginSuccess(JSON.parse(savedUser));
+        } else {
+            loginModal.classList.remove('hidden');
+        }
+    }
+
+    function loginSuccess(user) {
+        currentUser = user;
+        localStorage.setItem('blog_creator_user', JSON.stringify(user));
+
+        displayEmail.textContent = user.email;
+        if (user.systemPrompt) {
+            systemPrompt = user.systemPrompt;
+        }
+
+        loginModal.classList.add('hidden');
+    }
+
+    async function callGasApi(data) {
+        const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'text/plain;charset=utf-8',
+            },
+            body: JSON.stringify(data)
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const textResult = await response.text();
+        try {
+            return JSON.parse(textResult);
+        } catch (e) {
+            console.error("Raw Response:", textResult);
+            throw new Error("サーバーからの応答が不正です");
+        }
+    }
+
+    function setLoading(btn, isLoading, loadingText = '処理中...') {
+        if (isLoading) {
+            btn.dataset.originalText = btn.innerHTML;
+            btn.innerHTML = `<span class="sparkle">⏳</span> ${loadingText}`;
+            btn.disabled = true;
+        } else {
+            btn.innerHTML = btn.dataset.originalText;
+            btn.disabled = false;
+        }
+    }
 });
+
+// Googleログインのコールバック (グローバル関数である必要がある)
+async function handleCredentialResponse(response) {
+    try {
+        // GAS APIを呼び出すためのヘルパー関数を再定義（スコープ外のため）
+        const callGas = async (data) => {
+            const res = await fetch(GAS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(data)
+            });
+            return res.json();
+        };
+
+        const result = await callGas({
+            action: 'googleLogin',
+            idToken: response.credential
+        });
+
+        if (result.success) {
+            // ログイン成功処理
+            const user = result.user;
+            localStorage.setItem('blog_creator_user', JSON.stringify(user));
+            document.getElementById('display-email').textContent = user.email;
+            document.getElementById('login-modal').classList.add('hidden');
+
+            // システムプロンプト更新
+            if (user.systemPrompt) {
+                // グローバル変数を更新したいが、moduleスコープ外からはアクセスしにくい
+                // ここではリロードしてlocalStorageから読み込ませるのが確実
+                location.reload();
+            }
+        } else {
+            alert('Googleログイン失敗: ' + result.message);
+        }
+    } catch (e) {
+        console.error(e);
+        alert('Googleログインエラー');
+    }
+}
