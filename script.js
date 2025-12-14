@@ -1,5 +1,6 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyZh_PSfSuFpE9kwqGcBh3tPO8fBNS5VeSCvrTK3xqRdlQRQftqCFdA6L12FQcmWwpq0g/exec';
 
+
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -368,12 +369,12 @@ ${systemPrompt}
         if (user.plan && user.plan !== 'Free') {
             console.log('Showing WP Button'); // Debug
             wpBtn.classList.remove('hidden');
-            // 強制的に表示 (CSSの問題回避)
-            wpBtn.style.display = 'inline-flex';
+            // 強制的に表示 (!important)
+            wpBtn.style.setProperty('display', 'inline-flex', 'important');
         } else {
             console.log('Hiding WP Button'); // Debug
             wpBtn.classList.add('hidden');
-            wpBtn.style.display = 'none';
+            wpBtn.style.setProperty('display', 'none', 'important');
         }
     }
 
