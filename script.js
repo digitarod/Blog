@@ -1,4 +1,4 @@
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbz0PUefQzPHgSQMjoYbM6zD-5mzvpjwzFdXOwPRsI0IhWAElsHDzHzSwXAkH6ksjivm-w/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwvQg6lHaMVAbE1rmPcySyWj5SeodU53LaheeT0_Uy7xcE1xQJTPb0yQotN-L1Uvhckvg/exec';
 
 // 状態管理
 let currentUser = null;
@@ -108,6 +108,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. 設定モーダル開閉
     settingsBtn.addEventListener('click', () => {
         systemPromptSetting.value = systemPrompt; // 現在の値をセット
+
+        // WP設定の反映
+        if (currentUser && currentUser.settings) {
+            document.getElementById('wp-url').value = currentUser.settings.wpUrl || '';
+            document.getElementById('wp-user').value = currentUser.settings.wpUser || '';
+            document.getElementById('wp-pass').value = currentUser.settings.wpPass || '';
+            document.getElementById('theme-sheet-url').value = currentUser.settings.themeSheetUrl || '';
+            document.getElementById('auto-post-time').value = currentUser.settings.autoPostTime || '';
+        }
+
         settingsModal.classList.remove('hidden');
     });
 
@@ -116,10 +126,78 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // 4. 設定保存
-    saveSettingsBtn.addEventListener('click', () => {
-        systemPrompt = systemPromptSetting.value;
-        settingsModal.classList.add('hidden');
-        alert('設定を保存しました（一時的）');
+    saveSettingsBtn.addEventListener('click', async () => {
+        setLoading(saveSettingsBtn, true, '保存中...');
+
+        const newSystemPrompt = systemPromptSetting.value;
+        const wpSettings = {
+            wpUrl: document.getElementById('wp-url').value,
+            wpUser: document.getElementById('wp-user').value,
+            wpPass: document.getElementById('wp-pass').value,
+            themeSheetUrl: document.getElementById('theme-sheet-url').value,
+            autoPostTime: document.getElementById('auto-post-time').value
+        };
+
+        try {
+            const response = await callGasApi({
+                action: 'saveWpSettings',
+                email: currentUser.email,
+                ...wpSettings
+            });
+
+            if (response.success) {
+                // ローカルの状態更新
+                systemPrompt = newSystemPrompt;
+                if (!currentUser.settings) currentUser.settings = {};
+                Object.assign(currentUser.settings, wpSettings);
+                currentUser.systemPrompt = newSystemPrompt;
+                localStorage.setItem('blog_creator_user', JSON.stringify(currentUser));
+
+                alert('設定を保存しました');
+                settingsModal.classList.add('hidden');
+            } else {
+                alert('保存失敗: ' + response.message);
+            }
+        } catch (e) {
+            alert('通信エラー: ' + e.message);
+        } finally {
+            setLoading(saveSettingsBtn, false);
+        }
+    });
+
+    // WPテスト投稿
+    document.getElementById('test-wp-post-btn').addEventListener('click', async function () {
+        const btn = this;
+        setLoading(btn, true, '投稿テスト中...');
+
+        const wpUrl = document.getElementById('wp-url').value;
+        const wpUser = document.getElementById('wp-user').value;
+        const wpPass = document.getElementById('wp-pass').value;
+        const themeSheetUrl = document.getElementById('theme-sheet-url').value;
+
+        if (!wpUrl || !wpUser || !wpPass) {
+            alert('WordPressの接続情報を入力してください');
+            setLoading(btn, false);
+            return;
+        }
+
+        try {
+            const response = await callGasApi({
+                action: 'testWpPost',
+                wpUrl, wpUser, wpPass, themeSheetUrl
+            });
+
+            if (response.success) {
+                alert(`テスト投稿成功！\n記事: ${response.title}\nURL: ${response.url}`);
+                window.open(response.url, '_blank');
+            } else {
+                alert('テスト投稿失敗: ' + (response.error || response.message));
+            }
+        } catch (e) {
+            alert('エラー: ' + e.message);
+        } finally {
+            setLoading(btn, false);
+        }
     });
 
     // 5. AIによるプロンプト改善
