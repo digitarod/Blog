@@ -1,4 +1,4 @@
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbximnhJAnHzcGqar6jYeY8DWrQArwr11wwwU2XWzz1_ygFEZE1YZTf4SIXbtAQbm6iGqA/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzBEL0CIWLX9NjM7P2Kf0hex9eM8LsxW_B_Aw80XoW8EJLlVFaa0kbRwhDkkBzLAD03RQ/exec';
 
 // 状態管理
 let currentUser = null;
@@ -173,7 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('設定を保存しました');
                 settingsModal.classList.add('hidden');
             } else {
-                alert('保存失敗: ' + response.message);
+                alert('保存失敗: ' + (response.message || response.error || '不明なエラー'));
             }
         } catch (e) {
             alert('通信エラー: ' + e.message);
@@ -384,66 +384,58 @@ ${systemPrompt}
 // ========================================
 // Google認証（ROOMアシスタント方式）
 // ========================================
-
-/**
- * Google Sign-Inを初期化
- */
 async function initGoogleSignIn() {
     try {
-        // GAS APIを呼び出すためのヘルパー関数を再定義（スコープ外のため）
-        const callGas = async (data) => {
-            const res = await fetch(GAS_API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(data)
-            });
-            return res.json();
-        };
+        // GASからクライアントIDを取得
+        const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'getGoogleClientId' })
+        });
+        const data = await response.json();
 
-        // GASからGoogle Client IDを取得
-        const res = await callGas({ action: 'getGoogleClientId' });
-
-        if (!res.success || !res.clientId) {
-            console.log('Google Client ID が設定されていません');
+        if (!data.success || !data.clientId) {
+            console.error('Google Client IDの取得に失敗しました');
             return;
         }
 
-        const clientId = res.clientId;
-        console.log('Using Google Client ID:', clientId); // Debug log
+        const clientId = data.clientId;
+        console.log('Google Client ID:', clientId);
 
-        // Google Sign-Inボタンを初期化
+        // Google Identity Servicesの初期化
         google.accounts.id.initialize({
             client_id: clientId,
-            callback: handleCredentialResponse
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true
         });
 
-        // ボタンをレンダリング
-        const container = document.getElementById('google-signin-button');
-        if (container) {
+        // ボタンのレンダリング
+        const buttonContainer = document.getElementById('google-signin-btn');
+        if (buttonContainer) {
             google.accounts.id.renderButton(
-                container,
+                buttonContainer,
                 {
                     theme: 'outline',
                     size: 'large',
-                    text: 'signin_with',
-                    shape: 'rectangular',
-                    logo_alignment: 'left',
-                    width: '300'
+                    width: '100%',
+                    text: 'continue_with',
+                    logo_alignment: 'left'
                 }
             );
         }
 
-        console.log('Google Sign-In 初期化完了');
+        // ワンタップログインの表示（オプション）
+        // google.accounts.id.prompt();
 
-    } catch (error) {
-        console.error('Google Sign-In 初期化エラー:', error);
+    } catch (e) {
+        console.error('Google Sign-In initialization error:', e);
     }
 }
 
-// Googleログインのコールバック
 async function handleCredentialResponse(response) {
     try {
-        // GAS APIを呼び出すためのヘルパー関数を再定義
+        // GAS APIを呼び出すためのヘルパー関数を再定義（スコープ外のため）
         const callGas = async (data) => {
             const res = await fetch(GAS_API_URL, {
                 method: 'POST',
@@ -473,7 +465,7 @@ async function handleCredentialResponse(response) {
 
             // システムプロンプト更新
             if (user.systemPrompt) {
-                location.reload();
+                location.reload(); // プロンプト反映のためリロード
             }
         } else {
             alert('Googleログイン失敗: ' + result.message);
