@@ -176,6 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await callGasApi({
                 action: 'saveWpSettings',
                 email: currentUser.email,
+                systemPrompt: newSystemPrompt, // 追加
                 ...wpSettings
             });
 
@@ -541,4 +542,4 @@ async function handleCredentialResponse(response) {
         console.error(e);
         alert('Googleログインエラー');
     }
-                }
+}
