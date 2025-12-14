@@ -1,6 +1,5 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzHxJscCkfhb52AWDsMp9SyWUGPO2UEbAyGeiu8QHxrRzDrQSJ0C2fPKjqpH3BBNAk7Gg/exec';
 
-
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -433,7 +432,7 @@ async function initGoogleSignIn() {
             return;
         }
 
-        const clientId = data.clientId;
+        const clientId = data.clientId.trim();
         console.log('Google Client ID:', clientId);
 
         // Google Identity Servicesの初期化
