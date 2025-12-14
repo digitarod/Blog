@@ -187,7 +187,7 @@
                     </div>
                     <div class="form-group">
                         <label>自動投稿時間 (1日1回)</label>
-                        <select id="auto-post-time" class="select-field">
+                        <select id="auto-post-time" class="input-field">
                             <option value="">自動投稿しない</option>
                             <option value="0">00:00</option>
                             <option value="1">01:00</option>
@@ -216,9 +216,17 @@
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label>投稿ステータス</label>
+                        <select id="wp-status" class="input-field">
+                            <option value="draft">下書き (Draft)</option>
+                            <option value="publish">公開 (Publish)</option>
+                        </select>
+                    </div>
+
                     <div class="action-area" style="margin-top: 1rem;">
-                        <button class="btn secondary full-width" id="test-wp-post-btn">
-                            <span class="icon">🚀</span> テスト投稿を実行
+                        <button class="btn secondary full-width" id="post-wp-btn">
+                            <span class="icon">🚀</span> WordPressに投稿 (エディタの内容)
                         </button>
                     </div>
                 </div>
