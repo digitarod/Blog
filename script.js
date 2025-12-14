@@ -1,5 +1,7 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyZh_PSfSuFpE9kwqGcBh3tPO8fBNS5VeSCvrTK3xqRdlQRQftqCFdA6L12FQcmWwpq0g/exec';
 
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxvgAjy4GD-dhF1d7Mbh5s3fnosPHjKghEIIX1rA9UX3728o54tQHaZenu2uOr87WRZ5A/exec';
+
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -362,10 +364,18 @@ ${systemPrompt}
 
         // Premiumユーザー判定 (Free以外なら表示)
         const wpBtn = document.getElementById('header-post-wp-btn');
+        console.log('User Plan:', user.plan); // Debug
+        console.log('WP Button Element:', wpBtn); // Debug
+
         if (user.plan && user.plan !== 'Free') {
+            console.log('Showing WP Button'); // Debug
             wpBtn.classList.remove('hidden');
+            // 強制的に表示 (CSSの問題回避)
+            wpBtn.style.display = 'inline-flex';
         } else {
+            console.log('Hiding WP Button'); // Debug
             wpBtn.classList.add('hidden');
+            wpBtn.style.display = 'none';
         }
     }
 
