@@ -420,21 +420,20 @@ async function initGoogleSignIn() {
         // GASからクライアントIDを取得
         console.log('Fetching Google Client ID...'); // Debug
 
-        // const response = await fetch(GAS_API_URL, {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        //     body: JSON.stringify({ action: 'getGoogleClientId' })
-        // });
-        // const data = await response.json();
+        const response = await fetch(GAS_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'getGoogleClientId' })
+        });
+        const data = await response.json();
 
-        // if (!data.success || !data.clientId) {
-        //     console.error('Google Client IDの取得に失敗しました');
-        //     alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
-        //     return;
-        // }
+        if (!data.success || !data.clientId) {
+            console.error('Google Client IDの取得に失敗しました');
+            alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
+            return;
+        }
 
-        // const clientId = data.clientId.trim();
-        const clientId = '289389300984-l48k6315k785k41400n68m8128038q9e.apps.googleusercontent.com';
+        const clientId = data.clientId.trim();
         console.log('Google Client ID:', clientId);
 
         // Google Identity Servicesの初期化
