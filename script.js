@@ -125,6 +125,23 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsModal.classList.add('hidden');
     });
 
+    // 設定タブ切り替え
+    const settingsTabBtns = document.querySelectorAll('.settings-tab-btn');
+    settingsTabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            // ボタンのアクティブ切り替え
+            settingsTabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            // コンテンツの切り替え
+            const tabName = btn.dataset.tab;
+            document.querySelectorAll('.settings-tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`settings-tab-${tabName}`).classList.add('active');
+        });
+    });
+
     // 4. 設定保存
     saveSettingsBtn.addEventListener('click', async () => {
         setLoading(saveSettingsBtn, true, '保存中...');
