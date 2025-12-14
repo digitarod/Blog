@@ -1,6 +1,5 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxalE_JPL2msVgAvcd-lHnsBt0p8eJL942k6SVjzVA-UFdPebCNmHslwl2ECzEOqae0gA/exec';
 
-
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -60,7 +59,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 初期化処理 ---
     checkLoginStatus();
-    initGoogleSignIn(); // Google認証の初期化
+
+    // Google認証の初期化（ライブラリ読み込み待ち）
+    const initGsi = () => {
+        if (typeof google !== 'undefined' && google.accounts) {
+            initGoogleSignIn();
+        } else {
+            // console.log('Waiting for Google GSI library...');
+            setTimeout(initGsi, 500);
+        }
+    };
+    // DOMContentLoadedの後でもライブラリが未ロードの場合があるため、少し待つかonloadを待つ
+    if (document.readyState === 'complete') {
+        initGsi();
+    } else {
+        window.addEventListener('load', initGsi);
+    }
 
     // --- イベントリスナー ---
 
@@ -351,6 +365,9 @@ ${systemPrompt}
         currentUser = user;
         localStorage.setItem('blog_creator_user', JSON.stringify(user));
 
+        console.log('Login Success:', user); // Debug
+        console.log('User Settings:', user.settings); // Debug
+
         if (displayEmail) displayEmail.textContent = user.email;
         if (user.systemPrompt) {
             systemPrompt = user.systemPrompt;
@@ -524,4 +541,4 @@ async function handleCredentialResponse(response) {
         console.error(e);
         alert('Googleログインエラー');
     }
-}
+                }
