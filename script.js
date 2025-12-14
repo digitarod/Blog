@@ -419,20 +419,22 @@ async function initGoogleSignIn() {
     try {
         // GASからクライアントIDを取得
         console.log('Fetching Google Client ID...'); // Debug
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'getGoogleClientId' })
-        });
-        const data = await response.json();
 
-        if (!data.success || !data.clientId) {
-            console.error('Google Client IDの取得に失敗しました');
-            alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
-            return;
-        }
+        // const response = await fetch(GAS_API_URL, {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        //     body: JSON.stringify({ action: 'getGoogleClientId' })
+        // });
+        // const data = await response.json();
 
-        const clientId = data.clientId.trim();
+        // if (!data.success || !data.clientId) {
+        //     console.error('Google Client IDの取得に失敗しました');
+        //     alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
+        //     return;
+        // }
+
+        // const clientId = data.clientId.trim();
+        const clientId = '289389300984-l48k6315k785k41400n68m8128038q9e.apps.googleusercontent.com';
         console.log('Google Client ID:', clientId);
 
         // Google Identity Servicesの初期化
@@ -451,7 +453,7 @@ async function initGoogleSignIn() {
                 {
                     theme: 'outline',
                     size: 'large',
-                    width: '100%',
+                    // width: '100%', // Removed to fix GSI warning
                     text: 'continue_with',
                     logo_alignment: 'left'
                 }
@@ -499,10 +501,14 @@ async function handleCredentialResponse(response) {
 
             // Premiumユーザー判定
             const wpBtn = document.getElementById('header-post-wp-btn');
+            console.log('User Plan (Login):', user.plan); // Debug
+
             if (user.plan && user.plan !== 'Free') {
                 wpBtn.classList.remove('hidden');
+                wpBtn.style.setProperty('display', 'inline-flex', 'important');
             } else {
                 wpBtn.classList.add('hidden');
+                wpBtn.style.setProperty('display', 'none', 'important');
             }
 
             // システムプロンプト更新
