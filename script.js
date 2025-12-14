@@ -184,21 +184,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // WP投稿 (エディタの内容)
-    document.getElementById('post-wp-btn').addEventListener('click', async function () {
+    // WP投稿 (エディタの内容) - ヘッダーボタン
+    document.getElementById('header-post-wp-btn').addEventListener('click', async function () {
         const btn = this;
         setLoading(btn, true, '投稿中...');
 
-        const wpUrl = document.getElementById('wp-url').value;
-        const wpUser = document.getElementById('wp-user').value;
-        const wpPass = document.getElementById('wp-pass').value;
-        const wpStatus = document.getElementById('wp-status').value || 'draft';
+        // 設定値の取得（currentUserから）
+        const settings = currentUser.settings || {};
+        const wpUrl = settings.wpUrl;
+        const wpUser = settings.wpUser;
+        const wpPass = settings.wpPass;
+        const wpStatus = settings.wpStatus || 'draft';
 
         const title = titleInput.value.trim();
         const content = quill.root.innerHTML; // HTML形式で取得
 
         if (!wpUrl || !wpUser || !wpPass) {
-            alert('WordPressの接続情報を入力してください');
+            alert('WordPressの接続情報が設定されていません。\n設定画面から入力してください。');
             setLoading(btn, false);
             return;
         }
@@ -357,6 +359,14 @@ ${systemPrompt}
         loginView.classList.add('hidden');
         appHeader.classList.remove('hidden');
         appContent.classList.remove('hidden');
+
+        // Premiumユーザー判定 (Free以外なら表示)
+        const wpBtn = document.getElementById('header-post-wp-btn');
+        if (user.plan && user.plan !== 'Free') {
+            wpBtn.classList.remove('hidden');
+        } else {
+            wpBtn.classList.add('hidden');
+        }
     }
 
     async function callGasApi(data) {
@@ -408,7 +418,7 @@ async function initGoogleSignIn() {
 
         if (!data.success || !data.clientId) {
             console.error('Google Client IDの取得に失敗しました');
-            alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
+            // alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
             return;
         }
 
@@ -443,7 +453,7 @@ async function initGoogleSignIn() {
 
     } catch (e) {
         console.error('Google Sign-In initialization error:', e);
-        alert('Googleログインの初期化に失敗しました: ' + e.message);
+        // alert('Googleログインの初期化に失敗しました: ' + e.message);
     }
 }
 
@@ -476,6 +486,14 @@ async function handleCredentialResponse(response) {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('app-header').classList.remove('hidden');
             document.getElementById('app-content').classList.remove('hidden');
+
+            // Premiumユーザー判定
+            const wpBtn = document.getElementById('header-post-wp-btn');
+            if (user.plan && user.plan !== 'Free') {
+                wpBtn.classList.remove('hidden');
+            } else {
+                wpBtn.classList.add('hidden');
+            }
 
             // システムプロンプト更新
             if (user.systemPrompt) {
