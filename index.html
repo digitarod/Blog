@@ -134,82 +134,93 @@
                 <button class="close-btn" id="close-settings">×</button>
             </div>
 
-            <div class="settings-section">
-                <h4>システムプロンプト (役割設定)</h4>
-                <p class="desc">AIの振る舞いや記事のスタイルを定義します。</p>
-                <textarea id="system-prompt-setting" class="prompt-area" rows="6">あなたはプロのWebライターです。
+            <!-- Settings Tabs -->
+            <div class="settings-tabs">
+                <button class="settings-tab-btn active" data-tab="general">基本設定</button>
+                <button class="settings-tab-btn" data-tab="wordpress">WordPress連携</button>
+            </div>
+
+            <!-- Tab 1: 基本設定 -->
+            <div id="settings-tab-general" class="settings-tab-content active">
+                <div class="settings-section">
+                    <h4>システムプロンプト (役割設定)</h4>
+                    <p class="desc">AIの振る舞いや記事のスタイルを定義します。</p>
+                    <textarea id="system-prompt-setting" class="prompt-area" rows="6">あなたはプロのWebライターです。
 読者の興味を惹きつける、SEOに強いブログ記事を作成してください。
 構成は「導入」「見出しごとの本文」「まとめ」としてください。</textarea>
 
-                <div class="ai-improve-area">
-                    <input type="text" id="improve-request" class="input-field"
-                        placeholder="改善の要望 (例: もっと親しみやすく、絵文字多めで)">
-                    <button class="btn accent" id="improve-prompt-btn">
-                        <span class="sparkle">✨</span> AIで改善
-                    </button>
+                    <div class="ai-improve-area">
+                        <input type="text" id="improve-request" class="input-field"
+                            placeholder="改善の要望 (例: もっと親しみやすく、絵文字多めで)">
+                        <button class="btn accent" id="improve-prompt-btn">
+                            <span class="sparkle">✨</span> AIで改善
+                        </button>
+                    </div>
                 </div>
             </div>
 
-            <!-- WordPress連携 (Premium) -->
-            <div class="settings-section">
-                <h4>WordPress連携 (Premium)</h4>
-                <p class="desc">WordPressへの自動投稿設定を行います。</p>
+            <!-- Tab 2: WordPress連携 (Premium) -->
+            <div id="settings-tab-wordpress" class="settings-tab-content">
+                <div class="settings-section">
+                    <h4>WordPress連携 (Premium)</h4>
+                    <p class="desc">WordPressへの自動投稿設定を行います。</p>
 
-                <div class="form-group">
-                    <label>WordPress サイトURL</label>
-                    <input type="text" id="wp-url" class="input-field" placeholder="https://example.com">
-                </div>
-                <div class="form-group">
-                    <label>ユーザー名</label>
-                    <input type="text" id="wp-user" class="input-field" placeholder="user">
-                </div>
-                <div class="form-group">
-                    <label>アプリケーションパスワード</label>
-                    <input type="password" id="wp-pass" class="input-field" placeholder="xxxx xxxx xxxx xxxx">
-                    <p style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
-                        ※WP管理画面 > ユーザー > プロフィール > アプリケーションパスワード で発行
-                    </p>
-                </div>
-                <div class="form-group">
-                    <label>テーマ一覧スプレッドシートURL</label>
-                    <input type="text" id="theme-sheet-url" class="input-field"
-                        placeholder="https://docs.google.com/spreadsheets/d/...">
-                </div>
-                <div class="form-group">
-                    <label>自動投稿時間 (1日1回)</label>
-                    <select id="auto-post-time" class="select-field">
-                        <option value="">自動投稿しない</option>
-                        <option value="0">00:00</option>
-                        <option value="1">01:00</option>
-                        <option value="2">02:00</option>
-                        <option value="3">03:00</option>
-                        <option value="4">04:00</option>
-                        <option value="5">05:00</option>
-                        <option value="6">06:00</option>
-                        <option value="7">07:00</option>
-                        <option value="8">08:00</option>
-                        <option value="9">09:00</option>
-                        <option value="10">10:00</option>
-                        <option value="11">11:00</option>
-                        <option value="12">12:00</option>
-                        <option value="13">13:00</option>
-                        <option value="14">14:00</option>
-                        <option value="15">15:00</option>
-                        <option value="16">16:00</option>
-                        <option value="17">17:00</option>
-                        <option value="18">18:00</option>
-                        <option value="19">19:00</option>
-                        <option value="20">20:00</option>
-                        <option value="21">21:00</option>
-                        <option value="22">22:00</option>
-                        <option value="23">23:00</option>
-                    </select>
-                </div>
+                    <div class="form-group">
+                        <label>WordPress サイトURL</label>
+                        <input type="text" id="wp-url" class="input-field" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>ユーザー名</label>
+                        <input type="text" id="wp-user" class="input-field" placeholder="user">
+                    </div>
+                    <div class="form-group">
+                        <label>アプリケーションパスワード</label>
+                        <input type="password" id="wp-pass" class="input-field" placeholder="xxxx xxxx xxxx xxxx">
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 0.25rem;">
+                            ※WP管理画面 > ユーザー > プロフィール > アプリケーションパスワード で発行
+                        </p>
+                    </div>
+                    <div class="form-group">
+                        <label>テーマ一覧スプレッドシートURL</label>
+                        <input type="text" id="theme-sheet-url" class="input-field"
+                            placeholder="https://docs.google.com/spreadsheets/d/...">
+                    </div>
+                    <div class="form-group">
+                        <label>自動投稿時間 (1日1回)</label>
+                        <select id="auto-post-time" class="select-field">
+                            <option value="">自動投稿しない</option>
+                            <option value="0">00:00</option>
+                            <option value="1">01:00</option>
+                            <option value="2">02:00</option>
+                            <option value="3">03:00</option>
+                            <option value="4">04:00</option>
+                            <option value="5">05:00</option>
+                            <option value="6">06:00</option>
+                            <option value="7">07:00</option>
+                            <option value="8">08:00</option>
+                            <option value="9">09:00</option>
+                            <option value="10">10:00</option>
+                            <option value="11">11:00</option>
+                            <option value="12">12:00</option>
+                            <option value="13">13:00</option>
+                            <option value="14">14:00</option>
+                            <option value="15">15:00</option>
+                            <option value="16">16:00</option>
+                            <option value="17">17:00</option>
+                            <option value="18">18:00</option>
+                            <option value="19">19:00</option>
+                            <option value="20">20:00</option>
+                            <option value="21">21:00</option>
+                            <option value="22">22:00</option>
+                            <option value="23">23:00</option>
+                        </select>
+                    </div>
 
-                <div class="action-area" style="margin-top: 1rem;">
-                    <button class="btn secondary full-width" id="test-wp-post-btn">
-                        <span class="icon">🚀</span> テスト投稿を実行
-                    </button>
+                    <div class="action-area" style="margin-top: 1rem;">
+                        <button class="btn secondary full-width" id="test-wp-post-btn">
+                            <span class="icon">🚀</span> テスト投稿を実行
+                        </button>
+                    </div>
                 </div>
             </div>
 
