@@ -1,7 +1,5 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyZh_PSfSuFpE9kwqGcBh3tPO8fBNS5VeSCvrTK3xqRdlQRQftqCFdA6L12FQcmWwpq0g/exec';
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxvgAjy4GD-dhF1d7Mbh5s3fnosPHjKghEIIX1rA9UX3728o54tQHaZenu2uOr87WRZ5A/exec';
-
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -417,8 +415,10 @@ ${systemPrompt}
 // Google認証（ROOMアシスタント方式）
 // ========================================
 async function initGoogleSignIn() {
+    console.log('initGoogleSignIn started'); // Debug
     try {
         // GASからクライアントIDを取得
+        console.log('Fetching Google Client ID...'); // Debug
         const response = await fetch(GAS_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -428,7 +428,7 @@ async function initGoogleSignIn() {
 
         if (!data.success || !data.clientId) {
             console.error('Google Client IDの取得に失敗しました');
-            // alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
+            alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
             return;
         }
 
@@ -463,7 +463,7 @@ async function initGoogleSignIn() {
 
     } catch (e) {
         console.error('Google Sign-In initialization error:', e);
-        // alert('Googleログインの初期化に失敗しました: ' + e.message);
+        alert('Googleログインの初期化に失敗しました: ' + e.message);
     }
 }
 
