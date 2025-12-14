@@ -1,7 +1,5 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWbIAAYaDMDPV0Hp2z4YEO4rfn_BORH10auSi4XD1TF1QDSQfEjYGYQ_hgEdYiO51O5A/exec';
 
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbxvgAjy4GD-dhF1d7Mbh5s3fnosPHjKghEIIX1rA9UX3728o54tQHaZenu2uOr87WRZ5A/exec';
-
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -413,7 +411,7 @@ async function initGoogleSignIn() {
         });
 
         // ボタンのレンダリング
-        const buttonContainer = document.getElementById('google-signin-btn');
+        const buttonContainer = document.getElementById('google-signin-button');
         if (buttonContainer) {
             google.accounts.id.renderButton(
                 buttonContainer,
