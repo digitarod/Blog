@@ -1,4 +1,4 @@
-const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzWbIAAYaDMDPV0Hp2z4YEO4rfn_BORH10auSi4XD1TF1QDSQfEjYGYQ_hgEdYiO51O5A/exec';
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbyZh_PSfSuFpE9kwqGcBh3tPO8fBNS5VeSCvrTK3xqRdlQRQftqCFdA6L12FQcmWwpq0g/exec';
 
 // 状態管理
 let currentUser = null;
@@ -116,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('wp-pass').value = currentUser.settings.wpPass || '';
             document.getElementById('theme-sheet-url').value = currentUser.settings.themeSheetUrl || '';
             document.getElementById('auto-post-time').value = currentUser.settings.autoPostTime || '';
+            document.getElementById('wp-status').value = currentUser.settings.wpStatus || 'draft';
         }
 
         settingsModal.classList.remove('hidden');
@@ -152,7 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
             wpUser: document.getElementById('wp-user').value,
             wpPass: document.getElementById('wp-pass').value,
             themeSheetUrl: document.getElementById('theme-sheet-url').value,
-            autoPostTime: document.getElementById('auto-post-time').value
+            autoPostTime: document.getElementById('auto-post-time').value,
+            wpStatus: document.getElementById('wp-status').value
         };
 
         try {
@@ -182,15 +184,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // WPテスト投稿
-    document.getElementById('test-wp-post-btn').addEventListener('click', async function () {
+    // WP投稿 (エディタの内容)
+    document.getElementById('post-wp-btn').addEventListener('click', async function () {
         const btn = this;
-        setLoading(btn, true, '投稿テスト中...');
+        setLoading(btn, true, '投稿中...');
 
         const wpUrl = document.getElementById('wp-url').value;
         const wpUser = document.getElementById('wp-user').value;
         const wpPass = document.getElementById('wp-pass').value;
-        const themeSheetUrl = document.getElementById('theme-sheet-url').value;
+        const wpStatus = document.getElementById('wp-status').value || 'draft';
+
+        const title = titleInput.value.trim();
+        const content = quill.root.innerHTML; // HTML形式で取得
 
         if (!wpUrl || !wpUser || !wpPass) {
             alert('WordPressの接続情報を入力してください');
@@ -198,17 +203,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        if (!title) {
+            alert('記事タイトルを入力してください');
+            setLoading(btn, false);
+            return;
+        }
+
         try {
             const response = await callGasApi({
-                action: 'testWpPost',
-                wpUrl, wpUser, wpPass, themeSheetUrl
+                action: 'postArticle',
+                wpUrl, wpUser, wpPass, wpStatus,
+                title, content
             });
 
             if (response.success) {
-                alert(`テスト投稿成功！\n記事: ${response.title}\nURL: ${response.url}`);
+                alert(`投稿成功！\n記事URL: ${response.url}`);
                 window.open(response.url, '_blank');
             } else {
-                alert('テスト投稿失敗: ' + (response.error || response.message));
+                alert('投稿失敗: ' + (response.error || response.message));
             }
         } catch (e) {
             alert('エラー: ' + e.message);
@@ -396,6 +408,7 @@ async function initGoogleSignIn() {
 
         if (!data.success || !data.clientId) {
             console.error('Google Client IDの取得に失敗しました');
+            alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
             return;
         }
 
@@ -430,6 +443,7 @@ async function initGoogleSignIn() {
 
     } catch (e) {
         console.error('Google Sign-In initialization error:', e);
+        alert('Googleログインの初期化に失敗しました: ' + e.message);
     }
 }
 
