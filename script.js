@@ -1,5 +1,7 @@
 const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbwizUZGKx2LUv0G4bWJRJcIlWdHt3DjD40YrpNyp7-CZ4CDQtZ422bX_fWO1CHCAwy2Zg/exec';
 
+const GAS_API_URL = 'https://script.google.com/macros/s/AKfycbzHxJscCkfhb52AWDsMp9SyWUGPO2UEbAyGeiu8QHxrRzDrQSJ0C2fPKjqpH3BBNAk7Gg/exec';
+
 // 状態管理
 let currentUser = null;
 let systemPrompt = `あなたはプロのWebライターです。
@@ -420,20 +422,22 @@ async function initGoogleSignIn() {
         // GASからクライアントIDを取得
         console.log('Fetching Google Client ID...'); // Debug
 
-        const response = await fetch(GAS_API_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'getGoogleClientId' })
-        });
-        const data = await response.json();
+        // const response = await fetch(GAS_API_URL, {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        //     body: JSON.stringify({ action: 'getGoogleClientId' })
+        // });
+        // const data = await response.json();
 
-        if (!data.success || !data.clientId) {
-            console.error('Google Client IDの取得に失敗しました');
-            alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
-            return;
-        }
+        // if (!data.success || !data.clientId) {
+        //     console.error('Google Client IDの取得に失敗しました');
+        //     alert('Google Client IDの取得に失敗しました。GASのデプロイを確認してください。');
+        //     return;
+        // }
 
-        const clientId = data.clientId.trim();
+        // const clientId = data.clientId.trim();
+        // 確実に動かすためにハードコード
+        const clientId = '224521683572-7aa3ruoltk2ps4vcc1a9i9ih9cpeegcj.apps.googleusercontent.com';
         console.log('Google Client ID:', clientId);
 
         // Google Identity Servicesの初期化
